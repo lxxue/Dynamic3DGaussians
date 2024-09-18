@@ -1,15 +1,19 @@
-import torch
-import os
-import json
 import copy
-import numpy as np
-from PIL import Image
+import json
+import os
 from random import randint
-from tqdm import tqdm
+
+import numpy as np
+import torch
 from diff_gaussian_rasterization import GaussianRasterizer as Renderer
-from helpers import setup_camera, l1_loss_v1, l1_loss_v2, weighted_l2_loss_v1, weighted_l2_loss_v2, quat_mult, \
-    o3d_knn, params2rendervar, params2cpu, save_params
-from external import calc_ssim, calc_psnr, build_rotation, densify, update_params_and_optimizer
+from PIL import Image
+from tqdm import tqdm
+
+from external import (build_rotation, calc_psnr, calc_ssim, densify,
+                      update_params_and_optimizer)
+from helpers import (l1_loss_v1, l1_loss_v2, o3d_knn, params2cpu,
+                     params2rendervar, quat_mult, save_params, setup_camera,
+                     weighted_l2_loss_v1, weighted_l2_loss_v2)
 
 
 def get_dataset(t, md, seq):
@@ -18,9 +22,12 @@ def get_dataset(t, md, seq):
         w, h, k, w2c = md['w'], md['h'], md['k'][t][c], md['w2c'][t][c]
         cam = setup_camera(w, h, k, w2c, near=1.0, far=100)
         fn = md['fn'][t][c]
-        im = np.array(copy.deepcopy(Image.open(f"./data/{seq}/ims/{fn}")))
+        im = np.array(copy.deepcopy(Image.open(f"/home/lixin/mount/scratch/chengwei/GS_tracking/{seq}/images/{fn}")))
+        seg = np.array(copy.deepcopy(Image.open(f"/home/lixin/mount/scratch/chengwei/GS_tracking/{seq}/seg/{fn.replace('.jpg', '.png')}"))).astype(np.float32)
+        mask = seg[:, :, :] > 127
+        im = im * mask
         im = torch.tensor(im).float().cuda().permute(2, 0, 1) / 255
-        seg = np.array(copy.deepcopy(Image.open(f"./data/{seq}/seg/{fn.replace('.jpg', '.png')}"))).astype(np.float32)
+        seg = seg[:, :, 0]
         seg = torch.tensor(seg).float().cuda()
         seg_col = torch.stack((seg, torch.zeros_like(seg), 1 - seg))
         dataset.append({'cam': cam, 'im': im, 'seg': seg_col, 'id': c})
@@ -35,7 +42,7 @@ def get_batch(todo_dataset, dataset):
 
 
 def initialize_params(seq, md):
-    init_pt_cld = np.load(f"./data/{seq}/init_pt_cld.npz")["data"]
+    init_pt_cld = np.load(f"/home/lixin/mount/scratch/chengwei/GS_tracking/{seq}/init_pt_cld.npz")["data"]
     seg = init_pt_cld[:, 6]
     max_cams = 50
     sq_dist, _ = o3d_knn(init_pt_cld[:, :3], 3)
@@ -188,7 +195,7 @@ def train(seq, exp):
     if os.path.exists(f"./output/{exp}/{seq}"):
         print(f"Experiment '{exp}' for sequence '{seq}' already exists. Exiting.")
         return
-    md = json.load(open(f"./data/{seq}/train_meta.json", 'r'))  # metadata
+    md = json.load(open(f"/home/lixin/mount/scratch/chengwei/GS_tracking/{seq}/train_meta.json", 'r'))  # metadata
     num_timesteps = len(md['fn'])
     params, variables = initialize_params(seq, md)
     optimizer = initialize_optimizer(params, variables)
@@ -219,7 +226,7 @@ def train(seq, exp):
 
 
 if __name__ == "__main__":
-    exp_name = "exp1"
-    for sequence in ["basketball", "boxes", "football", "juggle", "softball", "tennis"]:
+    exp_name = "exp_gs_tracking"
+    for sequence in ["mocap_240724_Take12"]:
         train(sequence, exp_name)
         torch.cuda.empty_cache()
