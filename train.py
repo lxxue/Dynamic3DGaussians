@@ -25,12 +25,13 @@ def get_dataset(t, md, seq):
         fn = md['fn'][t][c]
         im = np.array(copy.deepcopy(Image.open(f"{root}/{seq}/images_2x/{fn}")))
         seg = np.array(copy.deepcopy(Image.open(f"{root}/{seq}/scan_mask_2x/{fn.replace('.jpg', '.png')}"))).astype(np.float32)
+        seg /= 255
+        im = im * seg[:, :, None]
         # mask = seg > 127
         # im = im * mask[:, :, None]
         # seg = seg[:, :, 0]
         im = torch.tensor(im).float().cuda().permute(2, 0, 1) / 255
         seg = torch.tensor(seg).float().cuda()
-        seg /= 255
         seg_col = torch.stack((seg, torch.zeros_like(seg), 1 - seg))
         dataset.append({'cam': cam, 'im': im, 'seg': seg_col, 'id': c})
     return dataset
@@ -200,21 +201,20 @@ def initialize_post_first_timestep(params, variables, optimizer, num_knn=20):
 
 
 def report_progress(params, dataset, i, progress_bar, every_i, t, num_iter_per_timestep):
-    if i % every_i == 0:
-
+    if (i+1) % every_i == 0:
         # for cam_id in range(10):
         for cam_id in range(1):
             data = dataset[cam_id]
             im, _, _, = Renderer(raster_settings=data['cam'])(**params2rendervar(params))
             curr_id = data['id']
             im = torch.exp(params['cam_m'][curr_id])[:, None, None] * im + params['cam_c'][curr_id][:, None, None]
-            if i == num_iter_per_timestep - 1 or True:
+            if i+1 == num_iter_per_timestep or True:
                 Image.fromarray((im.cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8)).save(
                     f"./output/{exp_name}/{sequence}/timestep_{t:03d}_iter_{i:05d}_cam{cam_id:03d}.jpg")
-                Image.fromarray((data['im'].cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8)).save(
-                    f"./output/{exp_name}/{sequence}/timestep_{t:03d}_iter_{i:05d}_cam{cam_id:03d}_gt.jpg")
-                Image.fromarray((data['seg'].cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8)).save(
-                    f"./output/{exp_name}/{sequence}/timestep_{t:03d}_iter_{i:05d}_cam{cam_id:03d}_seg.jpg")
+                # Image.fromarray((data['im'].cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8)).save(
+                #     f"./output/{exp_name}/{sequence}/timestep_{t:03d}_iter_{i:05d}_cam{cam_id:03d}_gt.jpg")
+                # Image.fromarray((data['seg'].cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8)).save(
+                #     f"./output/{exp_name}/{sequence}/timestep_{t:03d}_iter_{i:05d}_cam{cam_id:03d}_seg.jpg")
         psnr = calc_psnr(im, data['im']).mean()
         progress_bar.set_postfix({"train img 0 PSNR": f"{psnr:.{7}f}"})
         progress_bar.update(every_i)
@@ -257,7 +257,10 @@ def train(seq, exp):
 
 if __name__ == "__main__":
     exp_name = "exp_gstar"
-    # for sequence in ["basketball"]:
-    for sequence in ["mocap_240724_Take12"]:
-        train(sequence, exp_name)
-        torch.cuda.empty_cache()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seq", type=str, required=True,
+                        choices=["mocap_240724_Take10", "mocap_240906_Take3", "mocap_240724_Take12", "mocap_240906_Take8"])
+    sequence = parser.parse_args().seq
+    train(sequence, exp_name)
+    torch.cuda.empty_cache()

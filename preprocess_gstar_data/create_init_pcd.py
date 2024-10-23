@@ -16,14 +16,14 @@ if __name__ == "__main__":
     data_dir = root / seq
     ply_fname = data_dir / "sparse" / "0" / "points3D.ply"
     pc = o3d.io.read_point_cloud(str(ply_fname))
-    bg_pc = o3d.io.read_point_cloud(str(data_dir / "point_cloud_bg.ply"))
     points = np.asarray(pc.points)
     colors = np.asarray(pc.colors)
-    bg_points = np.asarray(bg_pc.points)
-    bg_colors = np.asarray(bg_pc.colors)
     # print(points.shape)
     # colors also in the range of [0, 1]^3
     # print(colors.shape)
+    # bg_pc = o3d.io.read_point_cloud(str(data_dir / "point_cloud_bg.ply"))
+    # bg_points = np.asarray(bg_pc.points)
+    # bg_colors = np.asarray(bg_pc.colors)
 
     # Add a dummy segmentation column (e.g., all ones) 
     # as the point cloud is already segmented
