@@ -233,6 +233,13 @@ def visualize(seq, exp):
 
 
 if __name__ == "__main__":
-    exp_name = "pretrained"
-    for sequence in ["basketball", "boxes", "football", "juggle", "softball", "tennis"]:
-        visualize(sequence, exp_name)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seq", type=str, required=True,
+                        choices=["mocap_240724_Take10", "mocap_240906_Take3", "mocap_240724_Take12", "mocap_240906_Take8"])
+    args = parser.parse_args()
+    seq = args.seq
+    visualize(seq, "exp_gstar")
+    # exp_name = "pretrained"
+    # for sequence in ["basketball", "boxes", "football", "juggle", "softball", "tennis"]:
+    #     visualize(sequence, exp_name)
