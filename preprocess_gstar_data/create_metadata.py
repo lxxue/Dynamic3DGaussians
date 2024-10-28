@@ -6,8 +6,7 @@ import numpy as np
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seq", type=str, required=True, 
-                        choices=["mocap_240724_Take10", "mocap_240906_Take3", "mocap_240724_Take12", "mocap_240906_Take8"])
+    parser.add_argument("--seq", type=str, required=True) 
 
     args = parser.parse_args()
     seq = args.seq

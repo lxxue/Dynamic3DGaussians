@@ -259,8 +259,7 @@ if __name__ == "__main__":
     exp_name = "exp_gstar"
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seq", type=str, required=True,
-                        choices=["mocap_240724_Take10", "mocap_240906_Take3", "mocap_240724_Take12", "mocap_240906_Take8"])
+    parser.add_argument("--seq", type=str, required=True)
     sequence = parser.parse_args().seq
     train(sequence, exp_name)
     torch.cuda.empty_cache()

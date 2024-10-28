@@ -8,8 +8,7 @@ import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seq", type=str, required=True, 
-                        choices=["mocap_240724_Take10", "mocap_240906_Take3", "mocap_240724_Take12", "mocap_240906_Take8"])
+    parser.add_argument("--seq", type=str, required=True) 
     root = Path("/home/lixin/mount/scratch/lixin/GSTAR/")
     args = parser.parse_args()
     seq = args.seq
@@ -29,7 +28,7 @@ if __name__ == "__main__":
     # as the point cloud is already segmented
     seg = np.ones((points.shape[0], 1))
     pt_cld = np.hstack((points, colors, seg))
-    print(pt_cld.shape)
+    print("Number of points in the point cloud:", pt_cld.shape[0])
     init_pt_cld = pt_cld
     # bg_seg = np.zeros((bg_points.shape[0], 1))
     # bg_colors = np.zeros_like(bg_points)
