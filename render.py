@@ -46,7 +46,7 @@ def render(w, h, k, w2c, timestep_data):
 
 root="/home/lixin/mount/scratch/lixin/GSTAR"
 def render_all_timesteps(exp_name, seq, split):
-    print(f"{seq} {split} start")
+    print(f"{seq} render {split} views")
     assert split in ["train", "test"]
     scene_data, is_fg = load_scene_data(seq, exp_name)
     os.makedirs(f"{root}/{seq}/Dynamic3DGS/renders/", exist_ok=True)
@@ -67,7 +67,7 @@ def render_all_timesteps(exp_name, seq, split):
             fn = md['fn'][t][c]
             # print(f"./renders/{exp_name}/{seq}/{split}/{fn}")
             cv2.imwrite(f"{root}/{seq}/Dynamic3DGS/renders/{fn}", im[:, :, ::-1])
-    print(f"{seq} {split} done")
+    print(f"{seq} render {split} views done")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
