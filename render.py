@@ -49,14 +49,15 @@ def render_all_timesteps(exp_name, seq, split):
     print(f"{seq} render {split} views")
     assert split in ["train", "test"]
     scene_data, is_fg = load_scene_data(seq, exp_name)
-    os.makedirs(f"{root}/{seq}/Dynamic3DGS/renders/", exist_ok=True)
+    render_dir = f"{root}/{seq}/Dynamic3DGS/renders"
+    os.makedirs(render_dir, exist_ok=True)
     md = json.load(open(f"{root}/{seq}/Dynamic3DGS/{split}_meta.json", 'r'))
     num_timesteps = len(md['fn'])
     num_cams = len(md['fn'][0])
     w = md['w']
     h = md['h']
     for cam_id in md['cam_ids'][0]:
-        os.makedirs(f"{root}/{seq}/Dynamic3DGS/renders/{cam_id}", exist_ok=True)
+        os.makedirs(f"{render_dir}/{cam_id}", exist_ok=True)
     for t in trange(num_timesteps):
         for c in range(num_cams):
             w, h, k, w2c = md['w'], md['h'], md['k'][t][c], md['w2c'][t][c]
@@ -66,7 +67,7 @@ def render_all_timesteps(exp_name, seq, split):
             im = (im * 255).astype(np.uint8)
             fn = md['fn'][t][c]
             # print(f"./renders/{exp_name}/{seq}/{split}/{fn}")
-            cv2.imwrite(f"{root}/{seq}/Dynamic3DGS/renders/{fn}", im[:, :, ::-1])
+            cv2.imwrite(f"{render_dir}/{fn}", im[:, :, ::-1])
     print(f"{seq} render {split} views done")
 
 if __name__ == "__main__":
